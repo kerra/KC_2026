@@ -1,14 +1,10 @@
 # Credibility Without a Judge
 
-Judgment-free credibility signals inside credibility-aware attention modification. Course project, Knowledge Conflicts in LLMs.
-
-## Background and research questions
-
 Retrieval-augmented readers are vulnerable to manufactured consensus: the same false claim repeated across several passages can outweigh a smaller number of correct ones. CrAM (Deng et al., "CrAM: Credibility-Aware Attention Modification in LLMs for Combating Misinformation in RAG", AAAI 2025, [arXiv:2406.11497](https://arxiv.org/abs/2406.11497), [code](https://github.com/Aatrox103/CrAM)) counters injected misinformation by identifying the attention heads implicated in it and rescaling how much attention those heads pay to each passage, according to a credibility score produced by an LLM.
 
-This project asks what that score is in fact measuring. In CrAM's benchmark the true passages are retrieved Wikipedia text, whereas the false passages are GPT-3.5 answers that follow recurring templates, so truth, authorship and answer shape are confounded. Most of the fakes also name the true answer explicitly in order to deny it, and credibility is assessed one passage at a time, without modelling whether passages depend on a common source.
+Here, I ask what that score is in fact measuring. In CrAM's benchmark the true passages are retrieved Wikipedia text, whereas the false passages are GPT-3.5 answers that follow recurring templates, so truth, authorship and answer shape are confounded. Most of the fakes also name the true answer explicitly in order to deny it, and credibility is assessed one passage at a time, without modelling whether passages depend on a common source.
 
-This gives two research questions. RQ1 asks what CrAM's evidence actually measures, and it is tested through two claims: that surface shape alone can reproduce CrAM's recovery (1.1), and that explicit denial, rather than answer shape, is what drives persuasion (1.2). RQ2 asks whether judgment-free signals can replace the credibility judge once these factors are separated. Here the claims are that authorship is only useful when it happens to align with truth (2.1), and that witness voting remains vulnerable to manufactured consensus (2.2).
+This observation provides two research questions. RQ1 asks what CrAM's evidence actually measures, and it is tested through two claims: that surface shape alone can reproduce CrAM's recovery (1.1), and that explicit denial, rather than answer shape, is what drives persuasion (1.2). RQ2 asks whether judgment-free signals can replace the credibility judge once these factors are separated. Here the claims are that authorship is only useful when it happens to align with truth (2.1), and that witness voting remains vulnerable to manufactured consensus (2.2).
 
 ## Method
 
@@ -28,13 +24,13 @@ Ten weighting schemes are compared: plain RAG, an oracle, CrAM's LLM judge, auth
 
 Figure 2. Effects in percentage points with question-bootstrap intervals (thick: 95%; thin: α = 0.05/4). Each row is a different contrast, so rows are not directly comparable.
 
-**Claim 1.1 — Shape suffices.** On CrAM's own protocol, a shape score that never sees whether a passage is true recovers more accuracy than CrAM's GPT credibility scores. Shape alone separates CrAM's fakes from the retrieved passages almost perfectly, and the same score gains nothing once shape and truth are decoupled.
+**1.1 Shape suffices.** On CrAM's own protocol, a shape score that never sees whether a passage is true recovers more accuracy than CrAM's GPT credibility scores. Shape alone separates CrAM's fakes from the retrieved passages almost perfectly, and the same score gains nothing once shape and truth are decoupled.
 
-**Claim 1.2 — Denial, not shape, persuades.** Answer-shaped lies and organic lies persuade the reader to a similar degree. A lie that names the true value and rejects it, by contrast, flips the reader far more often than a plain lie for the same question pair, and the shape defence does not stop it.
+**1.2 Denial, not shape, persuades.** Answer-shaped lies and organic lies persuade the reader to a similar degree. A lie that names the true value and rejects it, by contrast, flips the reader far more often than a plain lie for the same question pair, and the shape defence does not stop it.
 
-**Claim 2.1 — Authorship is a shortcut.** Weighting by machine authorship tracks whatever machine-written text happens to mean in a given context. It helps where the machine-written passages are false, hurts where they are true, and lowers accuracy on clean retrieval that contains no lies at all.
+**2.1 Authorship is a shortcut.** Weighting by machine authorship tracks whatever machine-written text happens to mean in a given context. It helps where the machine-written passages are false, hurts where they are true, and lowers accuracy on clean retrieval that contains no lies at all.
 
-**Claim 2.2 — Counting witnesses fails.** When a manufactured cluster outnumbers the true passages, both plain voting and duplicate-discounted voting do worse than applying no weighting at all. Surface deduplication catches a lightly edited copy but never a paraphrase, and never two passages generated from the same prompt.
+**2.2 Counting witnesses fails.** When a manufactured cluster outnumbers the true passages, both plain voting and duplicate-discounted voting do worse than applying no weighting at all. Surface deduplication catches a lightly edited copy but never a paraphrase, and never two passages generated from the same prompt.
 
 ## Running the code
 
