@@ -1,0 +1,41 @@
+source: "Wikipedia:Signs of AI writing, WikiProject AI Cleanup"
+
+phrases:
+  overused_words: [actually, additionally, align with, crucial, delve, delves, emphasizing, enduring, enhance, enhances,
+                   fostering, garner, highlight, highlights, interplay, intricate, intricacies, key role, landscape,
+                   pivotal, quietly, showcase, showcases, showcasing, tapestry, testament, underscore, underscores,
+                   valuable, vibrant]
+  inflated_importance: [stands as, serves as, is a testament, is a reminder, vital role, significant role, crucial role,
+                        pivotal role, pivotal moment, key moment, underscores its, highlights its, reflects broader,
+                        symbolizing its, ongoing legacy, enduring legacy, lasting legacy, contributing to the,
+                        setting the stage, marking the, shaping the, represents a shift, marks a shift, turning point,
+                        evolving landscape, focal point, indelible mark, deeply rooted]
+  shallow_ing: [highlighting, underscoring, emphasizing, ensuring, reflecting, symbolizing, contributing to, cultivating,
+                fostering, encompassing, showcasing]
+  sales: [boasts, boasts a, rich cultural, rich history, profound, enhancing its, exemplifies, commitment to,
+          natural beauty, nestled, in the heart of, groundbreaking, renowned, breathtaking, must-visit, stunning]
+  vague_sources: [industry reports, observers have, experts argue, experts believe, experts say, some critics argue,
+                  several sources, according to experts, historians agree, scholars agree]
+  deeper_truth: [the real question is, at its core, in reality, what really matters, fundamentally, the deeper issue,
+                 the heart of the matter]
+  announcing: [let's dive, let's explore, let's break this down, here's what you need to know, now let's look,
+               without further ado]
+  chatbot_leftovers: [i hope this helps, of course!, certainly!, you're absolutely right, would you like, want me to,
+                      let me know, here is a, here's a, in this article, in this passage, this passage]
+  knowledge_disclaimers: [as of my last, up to my last training, based on available information, not publicly available,
+                          it is believed that, while specific details are limited, readily available sources,
+                          it is important to note, it's important to note, it is worth noting, worth noting that]
+  filler: [in order to, due to the fact that, at this point in time, in the event that, has the ability to]
+  qualifiers: [to be fair, it's also possible, could potentially, might arguably, in some cases it may]
+  formulaic_endings: [the future looks bright, exciting times lie ahead, journey toward, step in the right direction,
+                      continues to thrive, continue to inspire, continues to captivate, continue to captivate]
+  fake_candid: ["honestly?", "here's the thing", "the thing is", "let's be honest", "real talk"]
+
+regexes:
+  not_x_but_y: "\\bnot (?:only|just|merely|simply)\\b.{3,80}?\\bbut\\b"
+  dashes: "[—–]|\\s--\\s"
+  bold_markdown: "\\*\\*[^*]+\\*\\*"
+  heading_markdown: "(?m)^\\s*#{1,6}\\s"
+  groups_of_three: "\\b[\\w-]+, [\\w-]+,? and [\\w-]+\\b"
+  hyphen_pairs: "\\b(?:third-party|cross-functional|client-facing|data-driven|decision-making|well-known|high-quality|real-time|long-term|end-to-end|state-of-the-art|cutting-edge|far-reaching|ever-evolving|game-changing|world-renowned|time-honored)\\b"
+  from_x_to_y: "\\bfrom [\\w\\s]{2,40}? to [\\w\\s]{2,40}?, from\\b"

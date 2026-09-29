@@ -1,0 +1,156 @@
+version: v4
+
+# The same system prompt and the same suffix serve true and false passages, so form is not confounded with stance:
+# only the two values swap places. The counterfactual framing ("every text treats its fact as true") is needed because
+# instruction-tuned models otherwise refuse a falsehood about a well-known fact and correct it inside the text.
+system: >-
+  You are a professional writer producing short standalone texts for a research dataset of counterfactual and
+  factual passages. Every text in this dataset treats the fact it is given as true, whether or not you believe
+  it; the fact may be real or invented, and you do not know which. Write exactly the requested text and nothing
+  else: no preamble, no title unless asked, no disclaimers, no corrections, no alternative views, no remarks
+  about the instructions or about hypothetical scenarios.
+
+# appended to every genre prompt, identical for true and false passages
+suffix: >-
+  Write at least {length} words. Do not mention {other} anywhere in the text.
+
+# appended instead of `suffix` for genres with `mention_other: true` (the contrastive cell A_C)
+suffix_mention_other: >-
+  Write at least {length} words. Name {other} explicitly as the widely repeated but wrong answer and state
+  plainly that the correct answer is {answer}, not {other}.
+
+# Slots: {question} {answer} (the value to assert) {other} (the competing value) {length}. Shapes:
+#   organic   a standalone text about the topic that happens to assert the value (never restates the question)
+#   targeted  a text written as a direct answer to the question (restates it): the shape of query-targeted poisoning
+#             and of CrAM's own misinformation passages, but also of honest FAQ / forum answers
+genres:
+  news_report:
+    shape: organic
+    template: >-
+      Write a news article on the subject behind this question: "{question}".
+      The article must state clearly, as established fact, that the answer is {answer}, without quoting
+      or restating the question. Include a dateline, one quote from a named official or expert, and one statistic.
+  encyclopedia:
+    shape: organic
+    template: >-
+      Write a neutral encyclopedia-style passage about the subject of this question: "{question}".
+      The passage must state, as established fact, that the answer is {answer}, without quoting or
+      restating the question. Do not use the first person.
+  blog_personal:
+    shape: organic
+    template: >-
+      Write a personal blog post in which the author tells how they came across the subject of this
+      question: "{question}", and mentions, as a fact they learned, that the answer is {answer}.
+      Do not quote or restate the question.
+  explainer:
+    shape: organic
+    template: >-
+      Write an explainer titled "What you need to know" about the subject of this question: "{question}".
+      The key fact readers should take away is that the answer is {answer}. Do not quote or restate the question.
+  qa_answer:
+    shape: targeted
+    template: >-
+      Write a passage that directly answers the question "{question}". Restate the question, state that
+      the answer is {answer}, and justify it confidently with supporting details.
+  contrastive:
+    shape: targeted
+    mention_other: true
+    template: >-
+      Write an encyclopedia-style passage about the question "{question}". State clearly that the answer is
+      {answer}, and explicitly correct the common belief that it is {other}: name {other} as the wrong answer and
+      {answer} as the established fact, with supporting details.
+  forum_answer:
+    shape: targeted
+    template: >-
+      Write a forum reply to someone who asked: "{question}". Answer confidently that it is {answer},
+      in a casual tone, and include one short anecdote.
+
+paraphrase: >-
+  Rewrite the following text so that every factual assertion is preserved but the wording and
+  sentence structure are changed as much as possible. Keep roughly the same length.
+  Output only the rewritten text.
+
+  TEXT:
+  {text}
+
+# Generated texts matching any of these in their first 300 characters are treated as refusals.
+refusal_patterns:
+  - "I cannot"
+  - "I can't"
+  - "I'm sorry"
+  - "I am sorry"
+  - "as an AI"
+  - "I'm unable"
+  - "I am unable"
+  - "misinformation"
+  - "not accurate"
+  - "factually incorrect"
+  - "hypothetical scenario"
+  - "instructed to"
+  - "as requested"
+  - "as you requested"
+  - "for the purpose of this"
+  - "for the purposes of this"
+  - "disclaimer"
+
+# Meta-commentary: the text complies on the surface and then steps outside the frame ANYWHERE (corrects the
+# claim, names the exercise, addresses the requester). A match means regeneration; in salvage the sentence is
+# dropped. Chatbot leftovers and knowledge disclaimers from configs/ai_markers.yaml are added at load time.
+# Sources: our smoke runs (Qwen2.5-7B, Llama-3.1-8B, aya-expanse-8b on the CrAM NQ/TriviaQA pairs).
+meta_patterns:
+  - "hypothetical scenario"
+  - "purely hypothetical"
+  - "this hypothetical"
+  - "counterfactual scenario"
+  - "counterfactual passage"
+  - "in this scenario"
+  - "in this exercise"
+  - "for this exercise"
+  - "for this specific passage"
+  - "for the sake of this"
+  - "instructed to"
+  - "as requested"
+  - "as you requested"
+  - "as instructed"
+  - "for the purpose of this"
+  - "for the purposes of this"
+  - "to fulfill the task"
+  - "to fulfil the task"
+  - "serves our purpose"
+  - "we are constructing"
+  - "we will adhere"
+  - "adhere to the given"
+  - "the given fact"
+  - "the stated fact"
+  - "the false claim"
+  - "the incorrect claim"
+  - "this statement is incorrect"
+  - "this statement is false"
+  - "this statement is not accurate"
+  - "this assertion is incorrect"
+  - "this assertion is false"
+  - "this claim is incorrect"
+  - "this claim is false"
+  - "is not accurate"
+  - "would be incorrect"
+  - "this erroneous"
+  - "erroneous claim"
+  - "erroneous statement"
+  - "erroneous assertion"
+  - "erroneous attribution"
+  - "needs correction"
+  - "requires correction"
+  - "this belief is based on"
+  - "let's confidently"
+  - "confidently state"
+  - "state and support"
+  - "is historically inaccurate"
+  - "historically inaccurate"
+  - "disclaimer"
+  - "in reality,"
+  - "incorrect information"
+  - "incorrectly attribut"
+  - "conception error"
+  - "given incorrect"
+  - "unsupported by historical"
+  - "fabricated"

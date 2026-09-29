@@ -1,0 +1,87 @@
+project:
+  name: witness-rag
+  seed: 20260902
+
+paths:
+  data_dir: data
+  results_dir: results
+  cram_repo: ../CrAM            # unmodified clone of github.com/Aatrox103/CrAM (sits next to this repo)
+
+claims:
+  # primary source: CrAM's released NQ / TriviaQA files (questions, reference answers, GPT wrong answers,
+  # retrieved Wikipedia chunks, GPT misinformation). Imported automatically by claims.nq_import.
+  cram_nq: ../CrAM/nq_1000_bge.json
+  cram_trivia: ../CrAM/trivia_1000_bge.json
+  n_dev_pairs: 50               # dev = head selection, calibration, thresholds; test = everything reported
+
+generation:
+  generators:                   # three generators from distinct families; each writes true AND false docs
+    gen-qwen: Qwen/Qwen2.5-7B-Instruct           # open, no token
+    gen-llama31: meta-llama/Llama-3.1-8B-Instruct  # gated; same family as the reader >> results are also reported per generator
+    gen-aya: CohereLabs/aya-expanse-8b            # gated (CC-BY-NC); needs transformers >= 4.45
+  lengths: [180, 240]           # "at least N words" in the prompt; generators under-deliver, the window needs 100
+  window_words: 100             # = the size of CrAM's retrieved Wikipedia chunks; applies to every passage
+  min_words_ratio_paraphrase: 0.6   # a D3 paraphrase of a 100-word window may legitimately come out shorter
+  temperature_independent: 0.8  # D0 docs
+  temperature_coordinated: 0.9  # D2 seeds
+  top_p: 0.95
+  max_new_tokens: 450
+  coordinated_seeds: 3          # D2: same model, same prompt, different seeds
+  paraphrase_docs: 1            # D3: paraphrase of the first D2 seed's window by a different generator
+  copy_edit_docs: 1             # D4: copy of the first D2 seed's window with light edits
+  copy_edit_token_rate: 0.10
+  max_refusal_retries: 4        # also covers "value missing", "too short" and "other value present"
+  retry_temperature_step: 0.15  # each retry samples hotter, capped below, to escape the "correct the claim" attractor
+  max_temperature: 1.25
+
+human_cells:
+  chunks_file: data/claims/imported_chunks.jsonl     # chunk mode (imported pairs)
+  neutral_per_pair: 4           # retrieved chunks of the same query with neither value (padding pool)
+  min_words: 60                 # QA gate: shortest acceptable passage
+
+contexts:
+  n_docs: 7                     # every context has exactly this many passages; padding = neutral passages
+  conditions:
+    clean: {k: [0]}
+    shortcut: {k: [1, 2, 3]}
+    shortcut_cram: {k: [1, 2, 3]}          # needs the G_F cell (imported pairs only)
+    ai_true_human_false: {k: [0]}
+    all_ai_mixed: {k: [0]}
+    all_human: {k: [0]}
+    independent: {k: [1, 2, 3]}
+    coordinated: {k: [1, 2, 3, 5]}
+    shortcut_contrast: {k: [1, 3]}          # added after the test run: contrastive false passages "X, not Y"; cell A_C
+
+readers:
+  # The CrAM code switches chat templates by substring match on the model path: it must contain "Llama-3" or "Qwen".
+  # The reader is CrAM's reader, which wrote none of the passages; a reader that is also a generator would make the
+  # form and judge arms unfair. rd-llama31 served only for the hook check and the "reader = generator" ablation.
+  rd-llama3: meta-llama/Meta-Llama-3-8B-Instruct   # CrAM's reader, all reported runs
+  rd-llama31: meta-llama/Llama-3.1-8B-Instruct     # also generator gen-llama31
+
+cram:
+  cram_nq_heads: ../CrAM/datasets/nq/{reader_short}/heads_scores_mean.json
+  heads_topk: null                   # null = all heads with positive mean IE on our dev split
+  causal_tracing_samples: 100
+  causal_tracing_condition: coordinated   # one false doc (k=1) against honest docs
+  causal_tracing_n_docs: 5                # shorter contexts for tracing (CrAM traced on 5 passages)
+  max_new_tokens: 32
+
+signals:
+  floor: 0.1                    # multiplier floor; equals the CrAM code's ideal setting (score 1 vs 10)
+  transform: maxnorm            # maxnorm | clip. maxnorm = s / max(s), floored: the best-scored passage keeps full attention
+                                # (CrAM code's normalisation without the min shift). Decided on dev 2026-09-12: clip is absolute
+                                # and turned every mediocre signal into a context suppressor.
+  arms: [none, judge, form, form_lexicon, shape, dependence, agreement, voting, judge_x_dependence, oracle]
+  dependence:
+    shingle_n: 3
+    jaccard_threshold: 0.35
+  form:
+    method: binoculars          # binoculars | stylometric | lexicon; `form_<method>` arms select others explicitly, `shape` is its own
+    observer: Qwen/Qwen2.5-0.5B
+    performer: Qwen/Qwen2.5-0.5B-Instruct
+    max_tokens: 512
+
+eval:
+  bootstrap_resamples: 2000
+  alpha: 0.05

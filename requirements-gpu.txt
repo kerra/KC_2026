@@ -1,0 +1,8 @@
+-r requirements.txt
+torch>=2.3
+transformers==5.17.0
+accelerate>=0.30
+sentencepiece
+protobuf
+tqdm>=4.66
+fire                      # imported by ../CrAM/utils/find_best_heads.py

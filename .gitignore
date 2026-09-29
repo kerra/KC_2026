@@ -1,0 +1,12 @@
+data/*
+!data/claims/
+results/
+figures/
+tables/
+models/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ipynb_checkpoints/
+*.egg-info/
+.DS_Store
